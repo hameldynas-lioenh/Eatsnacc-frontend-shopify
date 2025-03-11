@@ -1,7 +1,7 @@
-import {RemixServer} from '@remix-run/react';
-import {isbot} from 'isbot';
-import {renderToReadableStream} from 'react-dom/server';
-import {createContentSecurityPolicy} from '@shopify/hydrogen';
+import { RemixServer } from '@remix-run/react';
+import { isbot } from 'isbot';
+import { renderToReadableStream } from 'react-dom/server';
+import { createContentSecurityPolicy } from '@shopify/hydrogen';
 
 /**
  * @param {Request} request
@@ -17,10 +17,15 @@ export default async function handleRequest(
   remixContext,
   context,
 ) {
-  const {nonce, header, NonceProvider} = createContentSecurityPolicy({
+  const { nonce, header, NonceProvider } = createContentSecurityPolicy({
     shop: {
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+      imgSrc: [
+        "'self'",
+        'https://cdn.shopify.com',
+        'https://hippeas.com',
+      ]
     },
   });
 

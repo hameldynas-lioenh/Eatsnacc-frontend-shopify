@@ -3,9 +3,17 @@
 // @ts-ignore
 // eslint-disable-next-line import/no-unresolved
 import * as remixBuild from 'virtual:remix/server-build';
-import {storefrontRedirect} from '@shopify/hydrogen';
+import {createContentSecurityPolicy, storefrontRedirect} from '@shopify/hydrogen';
 import {createRequestHandler} from '@shopify/remix-oxygen';
 import {createAppLoadContext} from '~/lib/context';
+
+createContentSecurityPolicy({
+  connectSrc: [
+    // (ie. 'wss://<your-ngrok-domain>.app:*')
+    'https://eatsnacc.com',
+    'https://bc5s6ncz-3000.inc1.devtunnels.ms',
+  ],
+});
 
 /**
  * Export a fetch handler in module format.

@@ -1,19 +1,20 @@
-import {redirect} from '@shopify/remix-oxygen';
-import {useLoaderData, Link} from '@remix-run/react';
+import { redirect } from '@shopify/remix-oxygen';
+import { useLoaderData, Link } from '@remix-run/react';
 import {
   getPaginationVariables,
   Image,
   Money,
   Analytics,
 } from '@shopify/hydrogen';
-import {useVariantUrl} from '~/lib/variants';
-import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import { useVariantUrl } from '~/lib/variants';
+import { PaginatedResourceSection } from '~/components/PaginatedResourceSection';
+import { motion } from 'motion/react';
 
 /**
  * @type {MetaFunction<typeof loader>}
  */
-export const meta = ({data}) => {
-  return [{title: `Hydrogen | ${data?.collection.title ?? ''} Collection`}];
+export const meta = ({ data }) => {
+  return [{ title: `Hydrogen | ${data?.collection.title ?? ''} Collection` }];
 };
 
 /**
@@ -26,7 +27,7 @@ export async function loader(args) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+  return { ...deferredData, ...criticalData };
 }
 
 /**
@@ -34,23 +35,30 @@ export async function loader(args) {
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
  * @param {LoaderFunctionArgs}
  */
-async function loadCriticalData({context, params, request}) {
-  const {handle} = params;
-  const {storefront} = context;
+async function loadCriticalData({ context, params, request }) {
+  const { handle } = params;
+  const { storefront } = context;
   const paginationVariables = getPaginationVariables(request, {
-    pageBy: 8,
+    pageBy: 100,
   });
 
   if (!handle) {
     throw redirect('/collections');
   }
 
-  const [{collection}] = await Promise.all([
+  const [{ collection }] = await Promise.all([
     storefront.query(COLLECTION_QUERY, {
-      variables: {handle, ...paginationVariables},
+      variables: { handle, ...paginationVariables },
       // Add other queries here, so that they are loaded in parallel
     }),
   ]);
+
+  const [{ collections }] = await Promise.all([
+    storefront.query(COLLECTIONS_QUERY, {
+      variables: paginationVariables,
+    }),
+    // Add other queries here, so that they are loaded in parallel
+  ]);  
 
   if (!collection) {
     throw new Response(`Collection ${handle} not found`, {
@@ -59,7 +67,7 @@ async function loadCriticalData({context, params, request}) {
   }
 
   return {
-    collection,
+    collection,collections
   };
 }
 
@@ -69,38 +77,109 @@ async function loadCriticalData({context, params, request}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {LoaderFunctionArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData({ context }) {
   return {};
+}
+
+const links = [
+  {
+    "name": "shop all",
+    "url": "all"
+  },
+  {
+    "name": "puffs",
+    "url": "puffs"
+  },
+  {
+    "name": "chips",
+    "url": "chips"
+  },
+  {
+    "name": "straws",
+    "url": "straws"
+  },
+  {
+    "name": "merch",
+    "url": "merch"
+  },
+]
+
+const ChipsCard = ({ product }) => {
+  const variantUrl = useVariantUrl(product.handle);
+  return <Link to={variantUrl} className='flex flex-1 flex-col rounded-3xl overflow-hidden relative'>
+    <div className='relative cursor-pointer'>
+      {product.featuredImage?<Image
+        alt={product.featuredImage.altText || product.title}
+        className='hover:opacity-0 transition duration-100 ease-in-out absolute top-0 left-0'
+        aspectRatio="1/1"
+        data={product.featuredImage}
+        sizes="(min-width: 45em) 400px, 100vw"
+      />:<img className='hover:opacity-0 transition duration-100 ease-in-out absolute top-0 left-0' src="/home/chips2.png" alt="" />}
+      <img className='' src="/home/chips1.png" alt="" />
+    </div>
+    <div className='bg-white p-4'>
+      <div className='flex justify-between'>
+        <span>{product.title}</span>
+        {/* {JSON.stringify(product)} */}
+        <span className='text-sm'>{product.priceRange.minVariantPrice.amount}</span>
+      </div>
+      <div className='flex justify-between'>
+        <span className='text-sm text-[#fec800]'>puff variety pack</span>
+        <span className='text-sm'>0.8oz bags</span>
+      </div>
+    </div>
+    <div className='absolute top-4 left-4 rounded-3xl bg-white text-[#51282b] p-1 px-3'>18 pack</div>
+  </Link>
 }
 
 export default function Collection() {
   /** @type {LoaderReturnData} */
-  const {collection} = useLoaderData();
+  const { collection,collections } = useLoaderData();
 
   return (
-    <div className="collection">
-      <h1>{collection.title}</h1>
-      <p className="collection-description">{collection.description}</p>
+    // <div className="collection">
+    //   <h1>{collection.title}</h1>
+    //   <p className="collection-description">{collection.description}</p>
+    //   <PaginatedResourceSection
+    //     connection={collection.products}
+    //     resourcesClassName="products-grid"
+    //   >
+    //     {({node: product, index}) => (
+    //       <ProductItem
+    //         key={product.id}
+    //         product={product}
+    //         loading={index < 8 ? 'eager' : undefined}
+    //       />
+    //     )}
+    //   </PaginatedResourceSection>
+    //   <Analytics.CollectionView
+    //     data={{
+    //       collection: {
+    //         id: collection.id,
+    //         handle: collection.handle,
+    //       },
+    //     }}
+    //   />
+    // </div>
+    <div className="bg-[#fec800] p-4 md:p-14">
+      <div className='flex justify-between my-10 md:text-start text-center flex-col md:flex-row'>
+        <motion.h4 initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} style={{ fontFamily: "Motel Xenia" }} className='text-7xl tracking-wide font-bold text-[#51282b]'>{collection.title}</motion.h4>
+        <div className='flex flex-wrap gap-4 items-center justify-center text-lg my-5 md:my-0'>
+          {collections.nodes.map((link, index) => (
+            <Link key={index} to={`/collections/${link.handle}`} className={`rounded-full text-sm md:text-base p-2 px-9 ${link.title === collection.title ? "text-white bg-[#51282b]" : "text-[#51282b] bg-white"}`}>
+              {link.title}
+            </Link>
+          ))}
+        </div>
+      </div>
       <PaginatedResourceSection
         connection={collection.products}
-        resourcesClassName="products-grid"
+        resourcesClassName="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-10"
       >
         {({node: product, index}) => (
-          <ProductItem
-            key={product.id}
-            product={product}
-            loading={index < 8 ? 'eager' : undefined}
-          />
+          <ChipsCard product={product}/>
         )}
       </PaginatedResourceSection>
-      <Analytics.CollectionView
-        data={{
-          collection: {
-            id: collection.id,
-            handle: collection.handle,
-          },
-        }}
-      />
     </div>
   );
 }
@@ -111,7 +190,7 @@ export default function Collection() {
  *   loading?: 'eager' | 'lazy';
  * }}
  */
-function ProductItem({product, loading}) {
+function ProductItem({ product, loading }) {
   const variantUrl = useVariantUrl(product.handle);
   return (
     <Link
@@ -196,6 +275,46 @@ const COLLECTION_QUERY = `#graphql
           endCursor
           startCursor
         }
+      }
+    }
+  }
+`;
+
+const COLLECTIONS_QUERY = `#graphql
+  fragment Collection on Collection {
+    id
+    title
+    handle
+    image {
+      id
+      url
+      altText
+      width
+      height
+    }
+  }
+  query StoreCollections(
+    $country: CountryCode
+    $endCursor: String
+    $first: Int
+    $language: LanguageCode
+    $last: Int
+    $startCursor: String
+  ) @inContext(country: $country, language: $language) {
+    collections(
+      first: $first,
+      last: $last,
+      before: $startCursor,
+      after: $endCursor
+    ) {
+      nodes {
+        ...Collection
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
       }
     }
   }

@@ -1,4 +1,4 @@
-import {useLoaderData} from '@remix-run/react';
+import { Await, Link, useLoaderData } from '@remix-run/react';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -6,17 +6,30 @@ import {
   getProductOptions,
   getAdjacentAndFirstAvailableVariants,
   useSelectedOptionInUrlParam,
+  Image
 } from '@shopify/hydrogen';
-import {ProductPrice} from '~/components/ProductPrice';
-import {ProductImage} from '~/components/ProductImage';
-import {ProductForm} from '~/components/ProductForm';
+import { ProductPrice } from '~/components/ProductPrice';
+import { ProductImage } from '~/components/ProductImage';
+import { ProductForm } from '~/components/ProductForm';
+import { motion } from 'motion/react';
+import ProductMediaGallery from '~/components/ProductMediaGallery';
+import { Suspense, useRef, useState } from 'react';
+import { FaAngleDown, FaAngleLeft, FaAngleRight } from 'react-icons/fa6';
+import Carousel from 'react-multi-carousel';
+import { useVariantUrl } from '~/lib/variants';
+// import ReactBeforeSliderComponent from 'react-before-after-slider-component';
+// import 'react-before-after-slider-component/dist/build.css';
+import { GiHamburgerMenu } from 'react-icons/gi';
+import CompareSlider from '~/components/InsidePuff';
+
+
 
 /**
  * @type {MetaFunction<typeof loader>}
  */
-export const meta = ({data}) => {
+export const meta = ({ data }) => {
   return [
-    {title: `Hydrogen | ${data?.product.title ?? ''}`},
+    { title: `Hydrogen | ${data?.product.title ?? ''}` },
     {
       rel: 'canonical',
       href: `/products/${data?.product.handle}`,
@@ -34,7 +47,7 @@ export async function loader(args) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+  return { ...deferredData, ...criticalData };
 }
 
 /**
@@ -42,23 +55,23 @@ export async function loader(args) {
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
  * @param {LoaderFunctionArgs}
  */
-async function loadCriticalData({context, params, request}) {
-  const {handle} = params;
-  const {storefront} = context;
+async function loadCriticalData({ context, params, request }) {
+  const { handle } = params;
+  const { storefront } = context;
 
   if (!handle) {
     throw new Error('Expected product handle to be defined');
   }
 
-  const [{product}] = await Promise.all([
+  const [{ product }] = await Promise.all([
     storefront.query(PRODUCT_QUERY, {
-      variables: {handle, selectedOptions: getSelectedProductOptions(request)},
+      variables: { handle, selectedOptions: getSelectedProductOptions(request) },
     }),
     // Add other queries here, so that they are loaded in parallel
   ]);
 
   if (!product?.id) {
-    throw new Response(null, {status: 404});
+    throw new Response(null, { status: 404 });
   }
 
   return {
@@ -72,16 +85,66 @@ async function loadCriticalData({context, params, request}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {LoaderFunctionArgs}
  */
-function loadDeferredData({context, params}) {
+function loadDeferredData({ context, params }) {
   // Put any API calls that is not critical to be available on first page render
   // For example: product reviews, product recommendations, social feeds.
+  const recommendedProducts = context.storefront
+    .query(RECOMMENDED_PRODUCTS_QUERY)
+    .catch((error) => {
+      // Log query errors, but don't throw them so the page can still render
+      console.error(error);
+      return null;
+    });
 
-  return {};
+  return {
+    recommendedProducts,
+  };
 }
+
+const FAQItem = ({ question, answer, isOpen, onClick }) => {
+  return (
+    <div className="mb-4">
+      <button
+        className="w-full text-left py-2 px-4 flex justify-between items-center cursor-pointer rounded-lg bg-transparent focus:outline-none"
+        onClick={onClick}
+        aria-expanded={isOpen}
+      >
+        <span className="text-xl font-medium text-[#51282b]">{question}</span>
+        <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+          <FaAngleDown size={24} className={`${isOpen ? "bg-[#51282b] text-[#fec800]" : "text-[#51282b] bg-white"} rounded-full p-1`} />
+        </span>
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+      >
+        <div className="text-xl px-4 py-3 text-[#51282b]">
+          <p>{answer}</p>
+        </div>
+      </div>
+
+      <div className="border-b border-[#51282b] mt-4"></div>
+    </div>
+  );
+};
+
+const faqData = [
+  {
+    question: "ingredients",
+    answer: "Chickpea Flour, Rice Flour, Sunflower Oil, Yellow Pea Flour, Maltodextrin, Salt, Sugar, Yeast Extract, Lactic Acid, Natural Flavoring, Turmeric Extract, Rosemary Extract"
+  },
+  {
+    question: "nutrition",
+    answer: "1 serving per bag | Serving size 21g Calories 100, Total Fat 4.5g, Saturated Fat 0g, Trans Fat 0g, Cholesterol Omg, Sodium 200mg, Total Carbohydrate 13g, Dietary Fiber 2g, Total Sugars <1g Incl. <1g Added Sugars, Protein 3g, Vitamin D Omg, Calcium 30mg, Iron 0mg, Potassium 130mg"
+  },
+]
 
 export default function Product() {
   /** @type {LoaderReturnData} */
-  const {product} = useLoaderData();
+  const { product, recommendedProducts } = useLoaderData();
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [openItems, setOpenItems] = useState({});
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -98,50 +161,248 @@ export default function Product() {
     ...product,
     selectedOrFirstAvailableVariant: selectedVariant,
   });
-
-  const {title, descriptionHtml} = product;
-
-  return (
-    <div className="product">
-      <ProductImage image={selectedVariant?.image} />
-      <div className="product-main">
-        <h1>{title}</h1>
-        <ProductPrice
-          price={selectedVariant?.price}
-          compareAtPrice={selectedVariant?.compareAtPrice}
-        />
-        <br />
-        <ProductForm
-          productOptions={productOptions}
-          selectedVariant={selectedVariant}
-        />
-        <br />
-        <br />
-        <p>
-          <strong>Description</strong>
-        </p>
-        <br />
-        <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />
-        <br />
-      </div>
-      <Analytics.ProductView
-        data={{
-          products: [
-            {
-              id: product.id,
-              title: product.title,
-              price: selectedVariant?.price.amount || '0',
-              vendor: product.vendor,
-              variantId: selectedVariant?.id || '',
-              variantTitle: selectedVariant?.title || '',
-              quantity: 1,
-            },
-          ],
-        }}
-      />
+  const handleToggle = (index) => {
+    setOpenItems(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+  const CustomButtonGroup = ({ next, previous }) => (
+    <div className="flex justify-end m-4 mx-16">
+      <button
+        className="p-4 rounded-full mx-2 cursor-pointer border-[#51282b] border-1 bg-transparent"
+        onClick={previous}
+      >
+        <FaAngleLeft size={20} color='#51282b' />
+      </button>
+      <button
+        className="p-4 rounded-full mx-2 cursor-pointer border-[#51282b] border-1 bg-transparent"
+        onClick={next}
+      >
+        <FaAngleRight size={20} color='#51282b' />
+      </button>
     </div>
   );
+  const ChipsCard = ({ product }) => {
+    const variantUrl = useVariantUrl(product.handle);
+    return <Link to={variantUrl} className='flex flex-1 flex-col rounded-3xl overflow-hidden relative'>
+      <div className='relative cursor-pointer'>
+        {product.featuredImage ? <Image
+          alt={product.featuredImage.altText || product.title}
+          className='hover:opacity-0 transition duration-100 ease-in-out absolute top-0 left-0'
+          aspectRatio="1/1"
+          data={product.featuredImage}
+          sizes="(min-width: 45em) 400px, 100vw"
+        /> : <img className='hover:opacity-0 transition duration-100 ease-in-out absolute top-0 left-0' src="/home/chips2.png" alt="" />}
+        <img className='' src="/home/chips1.png" alt="" />
+      </div>
+      <div className='bg-white p-4'>
+        <div className='flex justify-between'>
+          <span>{product.title}</span>
+          {/* {JSON.stringify(product)} */}
+          <span className='text-sm'>{product.priceRange.minVariantPrice.amount}</span>
+        </div>
+        <div className='flex justify-between'>
+          <span className='text-sm text-[#fec800]'>puff variety pack</span>
+          <span className='text-sm'>0.8oz bags</span>
+        </div>
+      </div>
+      <div className='absolute top-4 left-4 rounded-3xl bg-white text-[#51282b] p-1 px-3'>18 pack</div>
+    </Link>
+  }
+
+  const { title, descriptionHtml } = product;
+  const carouselRef = useRef(null)
+  const handleNext = (carouselRef) => {
+    carouselRef.current.next();
+  };
+
+  const handlePrevious = (carouselRef) => {
+    carouselRef.current.previous();
+  };
+
+  return (
+    <>
+      {product ? <div className=' md:p-14'>
+        <div className="product flex flex-col md:flex-row bg-[#99e1d8] rounded-4xl overflow-auto relative p-4 md:p-14">
+          {/* <ProductImage image={selectedVariant?.image} /> */}
+          <ProductMediaGallery
+            media={product.media}
+            selectedVariantImage={selectedVariant?.image}
+          />
+          <div className="sticky h-fit top-0 text-[#51282b] mx-3 md:mx-10 flex flex-col gap-5 text-xl md:w-1/2">
+            <h1 style={{ fontFamily: "Motel Xenia" }} className='text-6xl font-bold tracking-wide'>{title}</h1>
+            <ProductPrice
+              className="text-xl font-bold"
+              price={selectedVariant?.price}
+              compareAtPrice={selectedVariant?.compareAtPrice}
+            />
+            <div className='text-xl' dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+            <ProductForm
+              productOptions={productOptions}
+              selectedVariant={selectedVariant}
+            />
+            {faqData.map((faq, index) => (
+              <FAQItem
+                key={index}
+                question={faq.question}
+                answer={faq.answer}
+                isOpen={!!openItems[index]}
+                onClick={() => handleToggle(index)}
+              />
+            ))}
+          </div>
+          {/* {JSON.stringify(product)} */}
+          <Analytics.ProductView
+            data={{
+              products: [
+                {
+                  id: product.id,
+                  title: product.title,
+                  price: selectedVariant?.price.amount || '0',
+                  vendor: product.vendor,
+                  variantId: selectedVariant?.id || '',
+                  variantTitle: selectedVariant?.title || '',
+                  quantity: 1,
+                },
+              ],
+            }}
+          />
+        </div>
+        <div className='w-full hidden md:flex flex-wrap justify-between items-center px-5 my-14'>
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }} className='h-28' src="/home/certs/cert1.png" alt="" />
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className='h-28' src="/home/certs/cert2.png" alt="" />
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }} className='h-28' src="/home/certs/cert3.png" alt="" />
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.4 }} className='h-28' src="/home/certs/cert4.png" alt="" />
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.5 }} className='h-28' src="/home/certs/cert5.png" alt="" />
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.6 }} className='h-28' src="/home/certs/cert6.png" alt="" />
+          <motion.img initial={{ opacity: 0, y: 70 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.7 }} className='h-28' src="/home/certs/cert7.png" alt="" />
+        </div>
+        <div className='w-full md:hidden overflow-y-scroll md:flex-wrap flex justify-between items-center px-5 my-5' style={{ scrollbarWidth: "none" }}>
+          <img className='h-28' src="/home/certs/cert1.png" alt="" />
+          <img className='h-28' src="/home/certs/cert2.png" alt="" />
+          <img className='h-28' src="/home/certs/cert3.png" alt="" />
+          <img className='h-28' src="/home/certs/cert4.png" alt="" />
+          <img className='h-28' src="/home/certs/cert5.png" alt="" />
+          <img className='h-28' src="/home/certs/cert6.png" alt="" />
+          <img className='h-28' src="/home/certs/cert7.png" alt="" />
+        </div>
+
+        <div className='md:rounded-4xl flex-col md:flex-row bg-[#99e1d8] p-3 py-10 md:p-14 my-10 flex'>
+          <div className='md:w-1/3'>
+            <motion.h4 initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} style={{ fontFamily: "Motel Xenia" }} className='text-6xl text-[#41282b] font-semibold tracking-wide'>inside the hippeas puff</motion.h4 >
+            <p className='text-[#51282b] text-xl my-5'>Our chickpea puffs are not only made with sustainably grown chickpeas, but also offer a rich source of plant-based protein, fiber and far out flavor!</p>
+          </div>
+          <div className='md:w-2/3 md:ml-10'>
+            <CompareSlider beforeImage='/product/before.png' afterImage='/product/after.png' />
+          </div>
+        </div>
+
+        <div className='bg-[#ffc604] rounded-4xl py-10'>
+          <div className='px-16'>
+            <motion.h4 initial={{ opacity: 0, rotateZ: 30 }} whileInView={{ opacity: 1, rotateZ: 0 }} transition={{ duration: 0.2 }} style={{ fontFamily: "Motel Xenia", transformOrigin: 'left' }} className='text-6xl tracking-wide font-bold text-[#51282b]'>You may also like...</motion.h4>
+          </div>
+          <div className='w-full'>
+            <Suspense fallback={<div className="text-center">Loading...</div>}>
+              <Await resolve={recommendedProducts}>
+                {(response) => (
+                  <>
+                    {response ? (
+                      <div className="relative">
+                        <Carousel
+                          ref={carouselRef}
+                          additionalTransfrom={0}
+                          arrows={false} // Disable default arrows
+                          centerMode={false}
+                          containerClass="mx-4 md:mx-16 my-5"
+                          draggable
+                          focusOnSelect={false}
+                          keyBoardControl
+                          minimumTouchDrag={80}
+                          renderArrowsWhenDisabled={false}
+                          renderButtonGroupOutside={false}
+                          renderDotsOutside={false}
+                          responsive={{
+                            desktop: {
+                              breakpoint: { max: 3000, min: 1024 },
+                              items: 3.5,
+                              partialVisibilityGutter: 0,
+                            },
+                            mobile: {
+                              breakpoint: { max: 464, min: 0 },
+                              items: 1,
+                              partialVisibilityGutter: 30,
+                            },
+                            tablet: {
+                              breakpoint: { max: 1024, min: 464 },
+                              items: 2,
+                              partialVisibilityGutter: 30,
+                            },
+                          }}
+                          rewind={false}
+                          rewindWithAnimation={false}
+                          shouldResetAutoplay
+                          showDots={false}
+                          sliderClass=""
+                          slidesToSlide={1}
+                          swipeable
+                        >
+                          {response.products.nodes.map((e, ind) => {
+                            return (
+                              <motion.div key={ind} className='m-1' initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 * ind }}>
+                                <ChipsCard key={e.id} product={e}>
+
+                                </ChipsCard>
+                              </motion.div>
+                            );
+                          })}
+                        </Carousel>
+                        <CustomButtonGroup next={() => handleNext(carouselRef)} previous={() => handlePrevious(carouselRef)} />
+                      </div>
+                    ) : (
+                      <></>
+                    )}
+                  </>
+                )}
+              </Await>
+            </Suspense>
+          </div>
+        </div>
+      </div> : <></>}
+    </>
+  );
 }
+
+const RECOMMENDED_PRODUCTS_QUERY = `#graphql
+      fragment RecommendedProduct on Product {
+        id
+    title
+      handle
+      priceRange {
+        minVariantPrice {
+        amount
+        currencyCode
+      }
+    }
+      images(first: 1) {
+        nodes {
+        id
+        url
+      altText
+      width
+      height
+      }
+    }
+  }
+      query RecommendedProducts ($country: CountryCode, $language: LanguageCode)
+      @inContext(country: $country, language: $language) {
+        products(first: 4, sortKey: UPDATED_AT, reverse: true) {
+        nodes {
+        ...RecommendedProduct
+      }
+    }
+  }
+      `;
 
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
@@ -190,6 +451,20 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     encodedVariantExistence
     encodedVariantAvailability
+    media(first: 10) {
+      nodes {
+        ... on MediaImage {
+          id
+          image {
+            url
+            altText
+            width
+            height
+          }
+          mediaContentType
+        }
+      }
+    }
     options {
       name
       optionValues {

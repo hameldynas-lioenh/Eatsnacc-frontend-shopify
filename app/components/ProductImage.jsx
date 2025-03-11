@@ -6,18 +6,16 @@ import {Image} from '@shopify/hydrogen';
  * }}
  */
 export function ProductImage({image}) {
-  if (!image) {
-    return <div className="product-image" />;
-  }
   return (
-    <div className="product-image">
-      <Image
+    <div className="product-image w-1/2">
+      {image ? <Image
         alt={image.altText || 'Product Image'}
         aspectRatio="1/1"
         data={image}
+        className='rounded-3xl'
         key={image.id}
         sizes="(min-width: 45em) 50vw, 100vw"
-      />
+      /> : <img src='/header/bestsell.png' className='rounded-3xl'></img>}
     </div>
   );
 }

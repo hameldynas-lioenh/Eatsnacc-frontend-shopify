@@ -1,4 +1,5 @@
-import {createContext, useContext, useEffect, useState} from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { IoClose } from 'react-icons/io5';
 
 /**
  * A side bar component with Overlay
@@ -15,8 +16,8 @@ import {createContext, useContext, useEffect, useState} from 'react';
  *   heading: React.ReactNode;
  * }}
  */
-export function Aside({children, heading, type}) {
-  const {type: activeType, close} = useAside();
+export function Aside({ children, heading, type }) {
+  const { type: activeType, close } = useAside();
   const expanded = type === activeType;
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function Aside({children, heading, type}) {
             close();
           }
         },
-        {signal: abortController.signal},
+        { signal: abortController.signal },
       );
     }
     return () => abortController.abort();
@@ -39,26 +40,30 @@ export function Aside({children, heading, type}) {
   return (
     <div
       aria-modal
-      className={`overlay ${expanded ? 'expanded' : ''}`}
+      className={`overlay z-30 ${expanded ? 'expanded' : ''}`}
       role="dialog"
     >
       <button className="close-outside" onClick={close} />
-      <aside>
-        <header>
-          <h3>{heading}</h3>
-          <button className="close reset" onClick={close} aria-label="Close">
-            &times;
-          </button>
-        </header>
-        <main>{children}</main>
+      <aside className='z-50 w-full md:w-1/2'>
+        <div className='m-3 md:m-5 h-full relative bg-white rounded-l-4xl rounded-r-xl overflow-x-hidden'>
+          <div className='overflow-y-scroll overflow-x-hidden px-4 md:px-10 p-10 h-full'>
+            <header className='pb-5 text-[#51282b] tracking-wide font-bold'>
+              <h3 style={{ fontFamily: "Motel Xenia" }} className='text-5xl md:text-4xl'>{heading}</h3>
+              <button className="close reset cursor-pointer" onClick={close} aria-label="Close">
+                <IoClose size={26} />
+              </button>
+            </header>
+            <main>{children}</main>
+          </div>
+        </div>
       </aside>
-    </div>
+    </div >
   );
 }
 
 const AsideContext = createContext(null);
 
-Aside.Provider = function AsideProvider({children}) {
+Aside.Provider = function AsideProvider({ children }) {
   const [type, setType] = useState('closed');
 
   return (

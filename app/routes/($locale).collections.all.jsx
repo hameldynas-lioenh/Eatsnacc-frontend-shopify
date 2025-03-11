@@ -1,13 +1,14 @@
-import {useLoaderData, Link} from '@remix-run/react';
-import {getPaginationVariables, Image, Money} from '@shopify/hydrogen';
-import {useVariantUrl} from '~/lib/variants';
-import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import { useLoaderData, Link } from '@remix-run/react';
+import { getPaginationVariables, Image, Money } from '@shopify/hydrogen';
+import { useVariantUrl } from '~/lib/variants';
+import { PaginatedResourceSection } from '~/components/PaginatedResourceSection';
+import { motion } from 'motion/react';
 
 /**
  * @type {MetaFunction<typeof loader>}
  */
 export const meta = () => {
-  return [{title: `Hydrogen | Products`}];
+  return [{ title: `Hydrogen | Products` }];
 };
 
 /**
@@ -20,7 +21,7 @@ export async function loader(args) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+  return { ...deferredData, ...criticalData };
 }
 
 /**
@@ -28,19 +29,26 @@ export async function loader(args) {
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
  * @param {LoaderFunctionArgs}
  */
-async function loadCriticalData({context, request}) {
-  const {storefront} = context;
+async function loadCriticalData({ context, request }) {
+  const { storefront } = context;
   const paginationVariables = getPaginationVariables(request, {
-    pageBy: 8,
+    pageBy: 100,
   });
 
-  const [{products}] = await Promise.all([
+  const [{ products }] = await Promise.all([
     storefront.query(CATALOG_QUERY, {
-      variables: {...paginationVariables},
+      variables: { ...paginationVariables },
     }),
     // Add other queries here, so that they are loaded in parallel
   ]);
-  return {products};
+
+  const [{ collections }] = await Promise.all([
+    storefront.query(COLLECTIONS_QUERY, {
+      variables: paginationVariables,
+    }),
+    // Add other queries here, so that they are loaded in parallel
+  ]);  
+  return { products,collections };
 }
 
 /**
@@ -49,27 +57,87 @@ async function loadCriticalData({context, request}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {LoaderFunctionArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData({ context }) {
   return {};
+}
+
+const links = [
+  {
+    "name": "shop all",
+    "url": "all"
+  },
+  {
+    "name": "puffs",
+    "url": "puffs"
+  },
+  {
+    "name": "chips",
+    "url": "chips"
+  },
+  {
+    "name": "straws",
+    "url": "straws"
+  },
+  {
+    "name": "merch",
+    "url": "merch"
+  },
+]
+
+const ChipsCard = ({ product }) => {
+  const variantUrl = useVariantUrl(product.handle);
+  return <Link to={variantUrl} className='flex flex-1 flex-col rounded-3xl overflow-hidden relative'>
+    <div className='relative cursor-pointer'>
+      {product.featuredImage?<Image
+        alt={product.featuredImage.altText || product.title}
+        className='hover:opacity-0 transition duration-100 ease-in-out absolute top-0 left-0'
+        aspectRatio="1/1"
+        data={product.featuredImage}
+        sizes="(min-width: 45em) 400px, 100vw"
+      />:<img className='hover:opacity-0 transition duration-100 ease-in-out absolute top-0 left-0' src="/home/chips2.png" alt="" />}
+      <img className='' src="/home/chips1.png" alt="" />
+    </div>
+    <div className='bg-white p-4'>
+      <div className='flex justify-between'>
+        <span>{product.title}</span>
+        <span className='text-sm'>$24.99</span>
+      </div>
+      <div className='flex justify-between'>
+        <span className='text-sm text-[#fec800]'>puff variety pack</span>
+        <span className='text-sm'>0.8oz bags</span>
+      </div>
+    </div>
+    <div className='absolute top-4 left-4 rounded-3xl bg-white text-[#51282b] p-1 px-3'>18 pack</div>
+  </Link>
 }
 
 export default function Collection() {
   /** @type {LoaderReturnData} */
-  const {products} = useLoaderData();
+  const { products,collections } = useLoaderData();
 
   return (
-    <div className="collection">
-      <h1>Products</h1>
+    <div className="bg-[#fec800] p-14">
+      <div className='flex justify-between my-10'>
+        <motion.h4 initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} style={{ fontFamily: "Motel Xenia" }} className='text-7xl tracking-wide font-bold text-[#51282b]'>SHOP ALL</motion.h4>
+        <div className='flex gap-4 items-center justify-center text-lg'>
+          {collections.nodes.map((link, index) => (
+            <Link key={index} to={`/collections/${link.handle}`} className={`rounded-full p-2 px-9 ${index === 1 ? "text-white bg-[#51282b]" : "text-[#51282b] bg-white"}`}>
+              {link.title}
+            </Link>
+          ))}
+        </div>
+      </div>
       <PaginatedResourceSection
         connection={products}
-        resourcesClassName="products-grid"
+        resourcesClassName="grid grid-cols-3 gap-10"
       >
-        {({node: product, index}) => (
-          <ProductItem
-            key={product.id}
-            product={product}
-            loading={index < 8 ? 'eager' : undefined}
-          />
+        {({ node: product, index }) => (
+          // <ProductItem
+          //   key={product.id}
+          //   product={product}
+          //   loading={index < 8 ? 'eager' : undefined}
+          // />
+          <ChipsCard product={product} />
         )}
       </PaginatedResourceSection>
     </div>
@@ -82,7 +150,7 @@ export default function Collection() {
  *   loading?: 'eager' | 'lazy';
  * }}
  */
-function ProductItem({product, loading}) {
+function ProductItem({ product, loading }) {
   const variantUrl = useVariantUrl(product.handle);
   return (
     <Link
@@ -159,6 +227,47 @@ const CATALOG_QUERY = `#graphql
   }
   ${PRODUCT_ITEM_FRAGMENT}
 `;
+
+const COLLECTIONS_QUERY = `#graphql
+  fragment Collection on Collection {
+    id
+    title
+    handle
+    image {
+      id
+      url
+      altText
+      width
+      height
+    }
+  }
+  query StoreCollections(
+    $country: CountryCode
+    $endCursor: String
+    $first: Int
+    $language: LanguageCode
+    $last: Int
+    $startCursor: String
+  ) @inContext(country: $country, language: $language) {
+    collections(
+      first: $first,
+      last: $last,
+      before: $startCursor,
+      after: $endCursor
+    ) {
+      nodes {
+        ...Collection
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
+
 
 /** @typedef {import('@shopify/remix-oxygen').LoaderFunctionArgs} LoaderFunctionArgs */
 /** @template T @typedef {import('@remix-run/react').MetaFunction<T>} MetaFunction */

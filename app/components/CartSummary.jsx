@@ -1,44 +1,55 @@
-import {CartForm, Money} from '@shopify/hydrogen';
-import {useRef} from 'react';
+import { Link } from '@remix-run/react';
+import { CartForm, Money } from '@shopify/hydrogen';
+import { useRef } from 'react';
 
 /**
  * @param {CartSummaryProps}
  */
-export function CartSummary({cart, layout}) {
+export function CartSummary({ cart, layout }) {
   const className =
-    layout === 'page' ? 'cart-summary-page' : 'cart-summary-aside';
+    layout === 'page' ? 'cart-summary-page' : 'cart-summary-aside my-5';
 
   return (
     <div aria-labelledby="cart-summary" className={className}>
-      <h4>Totals</h4>
-      <dl className="cart-subtotal">
-        <dt>Subtotal</dt>
-        <dd>
-          {cart.cost?.subtotalAmount?.amount ? (
-            <Money data={cart.cost?.subtotalAmount} />
-          ) : (
-            '-'
-          )}
-        </dd>
-      </dl>
-      <CartDiscounts discountCodes={cart.discountCodes} />
-      <CartGiftCard giftCardCodes={cart.appliedGiftCards} />
+      <div style={{ fontFamily: "Motel Xenia" }} className='flex justify-between text-4xl mt-5'>
+        <h4 className='text-[#51282b] font-bold tracking-wide'>Total</h4>
+        <dl className="text-[#51282b] font-bold tracking-wide cart-subtotal">
+          <dd>
+            {cart.cost?.subtotalAmount?.amount ? (
+              <Money data={cart.cost?.subtotalAmount} />
+            ) : (
+              '-'
+            )}
+          </dd>
+        </dl>
+      </div>
+      <p className='text-[#51282b] opacity-60 my-3 text-sm md:text-xl'>Taxes and shipping calculated at checkout</p>
+      {/* <CartDiscounts discountCodes={cart.discountCodes} />
+      <CartGiftCard giftCardCodes={cart.appliedGiftCards} /> */}
       <CartCheckoutActions checkoutUrl={cart.checkoutUrl} />
+
     </div>
   );
 }
 /**
  * @param {{checkoutUrl?: string}}
  */
-function CartCheckoutActions({checkoutUrl}) {
+function CartCheckoutActions({ checkoutUrl }) {
   if (!checkoutUrl) return null;
 
   return (
-    <div>
-      <a href={checkoutUrl} target="_self">
-        <p>Continue to Checkout &rarr;</p>
-      </a>
-      <br />
+    <div className='flex gap-4 md:justify-start justify-center'>
+
+      <Link to={'/cart'}>
+        <button target="_self" className='rounded-full bg-[#51282b] px-6 md:px-14 text-sm md:text-lg text-white py-4 w-fit hover:bg-transparent border-3 border-[#51282b] hover:text-[#51282b] cursor-pointer'>
+          View Cart
+        </button>
+      </Link>
+      <Link to={checkoutUrl}>
+        <button target="_self" className='rounded-full bg-[#51282b] px-6 md:px-14 text-sm md:text-lg text-white py-4 w-fit hover:bg-transparent border-3 border-[#51282b] hover:text-[#51282b] cursor-pointer'>
+          Checkout
+        </button>
+      </Link>
     </div>
   );
 }
@@ -48,11 +59,11 @@ function CartCheckoutActions({checkoutUrl}) {
  *   discountCodes?: CartApiQueryFragment['discountCodes'];
  * }}
  */
-function CartDiscounts({discountCodes}) {
+function CartDiscounts({ discountCodes }) {
   const codes =
     discountCodes
       ?.filter((discount) => discount.applicable)
-      ?.map(({code}) => code) || [];
+      ?.map(({ code }) => code) || [];
 
   return (
     <div>
@@ -88,7 +99,7 @@ function CartDiscounts({discountCodes}) {
  *   children: React.ReactNode;
  * }}
  */
-function UpdateDiscountForm({discountCodes, children}) {
+function UpdateDiscountForm({ discountCodes, children }) {
   return (
     <CartForm
       route="/cart"
@@ -107,11 +118,11 @@ function UpdateDiscountForm({discountCodes, children}) {
  *   giftCardCodes: CartApiQueryFragment['appliedGiftCards'] | undefined;
  * }}
  */
-function CartGiftCard({giftCardCodes}) {
+function CartGiftCard({ giftCardCodes }) {
   const appliedGiftCardCodes = useRef([]);
   const giftCardCodeInput = useRef(null);
   const codes =
-    giftCardCodes?.map(({lastCharacters}) => `***${lastCharacters}`) || [];
+    giftCardCodes?.map(({ lastCharacters }) => `***${lastCharacters}`) || [];
 
   function saveAppliedCode(code) {
     const formattedCode = code.replace(/\s/g, ''); // Remove spaces
@@ -169,7 +180,7 @@ function CartGiftCard({giftCardCodes}) {
  *   children: React.ReactNode;
  * }}
  */
-function UpdateGiftCardForm({giftCardCodes, saveAppliedCode, children}) {
+function UpdateGiftCardForm({ giftCardCodes, saveAppliedCode, children }) {
   return (
     <CartForm
       route="/cart"
