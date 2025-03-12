@@ -5,7 +5,7 @@ import { useAside } from '~/components/Aside';
 import { IoBasketOutline, IoCartOutline, IoMenuOutline } from 'react-icons/io5';
 import { IoIosArrowDown } from 'react-icons/io';
 import { FaAngleDown, FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { FaFacebook } from 'react-icons/fa6';
 /**
