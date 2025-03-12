@@ -5,6 +5,87 @@ import { FaArrowRight, FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa
 /**
  * @param {FooterProps}
  */
+
+const navItems = [
+  {
+    title: "shop",
+    columns: [
+      {
+        title: "staff-picks",
+        url: "collections/staff-picks"
+      },
+      {
+        title: "shop all",
+        url: "collections/shop-all"
+      },
+      {
+        title: "dry fruits",
+        url: "collections/dry-fruits"
+      },
+      {
+        title: "puffs",
+        url: "collections/puffs"
+      },
+      {
+        title: "makhana",
+        url: "collections/makhana"
+      }
+    ],
+    rows: {
+      title: "best sellers",
+      items: [
+        {
+          img: "/header/bestsell.png",
+          title: "chickpea tortilla chips",
+          variety: "nacho vibes"
+        },
+        {
+          img: "/header/bestsell.png",
+          title: "chickpea puffs",
+          variety: "vegan white cheddar"
+        },
+        {
+          img: "/header/bestsell.png",
+          title: "chickpea puffs",
+          variety: "variety pack"
+        },
+      ]
+    }
+  },
+  {
+    title: "learn",
+    columns: [
+      {
+        title: "about us",
+        url: "pages/about-us"
+      },
+      {
+        title: "FAQs",
+        url: "pages/faq"
+      },
+      {
+        title: "sustainability",
+        url: "pages/sourcing"
+      },
+    ],
+    rows: {
+      title: "let's be social",
+      items: [
+        {
+          img: "/home/varpack.png",
+          title: "instagram",
+          variety: ""
+        },
+        {
+          img: "/home/varpack.png",
+          title: "tiktok",
+          variety: ""
+        },
+      ]
+    }
+  },
+
+]
 export function Footer({ footer: footerPromise, header, publicStoreDomain }) {
   return (
     // <Suspense>
@@ -29,37 +110,21 @@ export function Footer({ footer: footerPromise, header, publicStoreDomain }) {
             <div className='flex flex-col items-center md:items-start'>
               <img className='w-3/4' src="/footer/main.png" alt="" />
               <div className='flex my-10 gap-10 justify-center md:justify-start'>
-                <Link><FaFacebook size={28} className="" color='white'/></Link>
-                <Link><FaTwitter size={28} className="" color='white'/></Link>
-                <Link><FaInstagram size={28} className="" color='white'/></Link>
+                <Link><FaFacebook size={28} className="" color='white' /></Link>
+                <Link><FaTwitter size={28} className="" color='white' /></Link>
+                <Link><FaInstagram size={28} className="" color='white' /></Link>
               </div>
             </div>
           </div>
-          <div className='md:mx-16 text-white flex col-span-2 justify-between'>
-            <ul className='flex flex-col gap-4 text-lg'>
-              <p className='mb-2 text-xl opacity-60'>shop</p>
-              <li><Link to={'/collections/puffs'}>puffs</Link></li>
-              <li><Link to={'/collections/chips'}>chips</Link></li>
-              <li><Link to={'/collections/straws'}>straws</Link></li>
-              <li><Link to={'/collections/merch'}>merch</Link></li>
-              <li><Link to={'/collections/all'}>shop all</Link></li>
-            </ul>
-            <ul className='flex flex-col gap-4 text-lg'>
-              <p className='mb-2 text-xl opacity-60'>shop</p>
-              <li><Link to={'/collections/puffs'}>puffs</Link></li>
-              <li><Link to={'/collections/chips'}>chips</Link></li>
-              <li><Link to={'/collections/straws'}>straws</Link></li>
-              <li><Link to={'/collections/merch'}>merch</Link></li>
-              <li><Link to={'/collections/all'}>shop all</Link></li>
-            </ul>
-            <ul className='flex flex-col gap-4 text-lg'>
-              <p className='mb-2 text-xl opacity-60'>shop</p>
-              <li><Link to={'/collections/puffs'}>puffs</Link></li>
-              <li><Link to={'/collections/chips'}>chips</Link></li>
-              <li><Link to={'/collections/straws'}>straws</Link></li>
-              <li><Link to={'/collections/merch'}>merch</Link></li>
-              <li><Link to={'/collections/all'}>shop all</Link></li>
-            </ul>
+          <div className='md:mx-16 text-white flex col-span-2 justify-evenly'>
+            {navItems.map((item, ind) => {
+              return <ul className='flex flex-col gap-4 text-lg'>
+                <p className='mb-2 text-xl opacity-60'>{item.title}</p>
+                {item.columns.map((subItem, ind1) => {
+                  return <li><Link to={subItem.url}>{subItem.title}</Link></li>
+                })}
+              </ul>
+            })}
           </div>
           <div className='col-span-1 md:mx-4 my-10 md:my-0'>
             <h5 style={{ fontFamily: "Motel Xenia" }} className='text-4xl md:text-6xl tracking-wide  text-white'>Subscribe for 10% off your first order</h5>

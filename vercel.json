@@ -1,0 +1,8 @@
+{
+    "build": {
+      "env": {
+        "GENERATE_SOURCEMAP": "false"
+      }
+    }
+  }
+  

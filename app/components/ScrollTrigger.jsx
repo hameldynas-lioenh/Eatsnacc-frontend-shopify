@@ -1,5 +1,6 @@
+import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 
 const ScrollSyncSection = () => {
     const [activeIndex, setActiveIndex] = useState(0);

@@ -5,7 +5,7 @@ import { useAside } from '~/components/Aside';
 import { IoBasketOutline, IoCartOutline, IoMenuOutline } from 'react-icons/io5';
 import { IoIosArrowDown } from 'react-icons/io';
 import { FaAngleDown, FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { FaFacebook } from 'react-icons/fa6';
 /**
@@ -187,8 +187,7 @@ export function Header({ header, isLoggedIn, cart, publicStoreDomain }) {
                     <p className='text-4xl text-[#51282b]'>{item.rows.title}</p>
                     <div className='flex gap-3 my-5'>
                       {item.rows.items.map((row, rowIndex) => (
-                        <div>
-
+                        <div key={rowIndex}>
                           <div className='h-72 w-72 rounded-4xl overflow-hidden bg-orange-400'>
                             <img src={row.img} className='w-full h-full' alt="" />
                           </div>
@@ -275,13 +274,13 @@ export function HeaderMenu({
         <NavLink prefetch="intent" to="/learn">
           <span className="font-extrabold text-2xl text-[#51282b] hover:opacity-80">learn</span>
         </NavLink> */}
-        {navItems.map((item) => {
-          return <div className='flex flex-col gap-3'>
+        {navItems.map((item,ind) => {
+          return <div key={ind} className='flex flex-col gap-3'>
             <NavLink prefetch="intent">
               <span className="font-extrabold text-3xl text-[#51282b] hover:opacity-80">{item.title}</span>
             </NavLink>
-            {item.columns.map((col) => {
-              return <NavLink prefetch="intent" to={col.url} onClick={close}>
+            {item.columns.map((col,ind) => {
+              return <NavLink key={ind} prefetch="intent" to={col.url} onClick={close}>
                 <span className="ml-5 opacity-90 font-extrabold text-2xl text-[#51282b] hover:opacity-70">{col.title}</span>
               </NavLink>
             })}

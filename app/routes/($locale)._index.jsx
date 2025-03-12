@@ -4,10 +4,10 @@ import { Image, Money } from '@shopify/hydrogen';
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
-import Marquee from "react-simple-marquee";
 import { IoStarSharp } from 'react-icons/io5';
 import { motion } from 'motion/react';
 import { useVariantUrl } from '~/lib/variants';
+
 /**
  * @type {MetaFunction}
  */
@@ -287,8 +287,8 @@ export default function Homepage() {
                         >
                           {response.products.nodes.map((e, ind) => {
                             return (
-                              <motion.div className='m-1' initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 * ind }}>
-                                <ChipsCard key={e.id} product={e}>
+                              <motion.div key={ind} className='m-1' initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 * ind }}>
+                                <ChipsCard product={e}>
 
                                 </ChipsCard>
                               </motion.div>
@@ -308,16 +308,29 @@ export default function Homepage() {
         </div>
       </div>
 
-      <div className='w-full my-10'>
-        <Marquee speed={10} onHover={() => { }} autoFill style={{ fontFamily: "Motel Xenia" }}>
-          <span className='text-[#fec800] text-[150px] text-nowrap ml-30 font-bold tracking-wide'>Better for you, Better for the earth</span>
-        </Marquee>
+      <div className='w-full my-5'>
+        {/* <Marquee direction="left" speed={10} autoFill style={{ fontFamily: "Motel Xenia" }}>
+        <span className='text-[#fec800] text-[150px] text-nowrap ml-30 font-bold tracking-wide'>Better for you, Better for the earth</span>
+        </Marquee> */}
+        <div className="marquee-container" style={{ fontFamily: "Motel Xenia" }}>
+          {/* First marquee */}
+          <div className="marquee">
+            <span className='text-[#fec800] text-[150px] text-nowrap ml-30 font-bold tracking-wide'>Better for you, Better for the earth</span>
+            <span className='text-[#fec800] text-[150px] text-nowrap ml-30 font-bold tracking-wide'>Better for you, Better for the earth</span>
+            <span className='text-[#fec800] text-[150px] text-nowrap ml-30 font-bold tracking-wide'>Better for you, Better for the earth</span>
+          </div>
+
+          {/* Second marquee */}
+          {/* <div className="marquee2">
+            <span className='text-[#fec800] text-[150px] text-nowrap ml-30 font-bold tracking-wide'>Better for you, Better for the earth</span>
+          </div> */}
+        </div>
       </div>
 
       <div className='px-4 md:px-14'>
         <div className='flex flex-wrap'>
-          {aboutList.map((list) => (
-            <div className='flex w-full md:w-1/3 p-4 flex-col  items-center text-center text-[#51282b]'>
+          {aboutList.map((list, ind) => (
+            <div key={ind} className='flex w-full md:w-1/3 p-4 flex-col  items-center text-center text-[#51282b]'>
               <img className='h-30' src={list.img} alt="" />
               <h4 style={{ fontFamily: "Motel Xenia" }} className='text-5xl font-semibold tracking-wide my-3'>{list.title}</h4>
               <p className='text-xl'>{list.description}</p>
@@ -384,8 +397,8 @@ export default function Homepage() {
                       >
                         {response.products.nodes.map((e) => {
                           return (
-                            <div>
-                              <ChipsCard key={e.id} product={e}>
+                            <div key={e.id}>
+                              <ChipsCard  product={e}>
 
                               </ChipsCard>
                             </div>
@@ -447,9 +460,9 @@ export default function Homepage() {
                 slidesToSlide={1}
                 swipeable
               >
-                {testimonials.map((e) => {
+                {testimonials.map((e, ind) => {
                   return (
-                    <div className='m-2 relative bg-white rounded-4xl p-10 flex flex-col text-start text-[#51282b] text-2xl'>
+                    <div key={ind} className='m-2 relative bg-white rounded-4xl p-10 flex flex-col text-start text-[#51282b] text-2xl'>
                       <div className='flex gap-1 '>
                         <IoStarSharp size={26} color='#51282b' />
                         <IoStarSharp size={26} color='#51282b' />
@@ -524,9 +537,9 @@ export default function Homepage() {
             slidesToSlide={1}
             swipeable
           >
-            {[...Array(10)].map((e) => {
+            {[...Array(10)].map((e,ind) => {
               return (
-                <div className='m-1 rounded-3xl overflow-hidden'>
+                <div key={ind} className='m-1 rounded-3xl overflow-hidden'>
                   <img src="/home/power.png" alt="" />
                 </div>
               );

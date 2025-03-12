@@ -22,15 +22,47 @@ body{
   font-family: "Neue Haas Grotesk Display Medium";
 }
 
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
 
+@keyframes marquee2 {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.marquee-container {
+  position: relative;
+  overflow-x: hidden;
+}
+
+.marquee {
+  padding: 3rem 0;
+  white-space: nowrap;
+  animation: marquee 25s linear infinite;
+}
+
+.marquee2 {
+  position: absolute;
+  top: 0;
+  padding: 3rem 0;
+  white-space: nowrap;
+  animation: marquee2 25s linear infinite;
+}
 /*
 * --------------------------------------------------
 * Non anchor links
 * --------------------------------------------------
-*/
-.react-simple-marquee__marquee-wrapper:hover{
-  animation-play-state: running !important;
-}
+
 
 /*
 * --------------------------------------------------
