@@ -64,7 +64,10 @@
     "vite-tsconfig-paths": "^4.3.1"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.6.1"
+    "@rollup/rollup-linux-x64-gnu": "4.6.1",
+    "@tailwindcss/oxide-linux-x64-gnu": "4.0.0-beta.8",
+    "lightningcss-linux-x64-gnu": "1.29.1",
+    "@ast-grep/napi-linux-x64-gnu": "0.33.0"
   },
   "engines": {
     "node": ">=18.0.0"
